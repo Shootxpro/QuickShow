@@ -1,37 +1,44 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { dummyDateTimeData, dummyShowsData } from '../assets/assets';
 import BlurCircle from '../components/BlurCircle';
 import { Heart, StarIcon, PlayCircleIcon } from 'lucide-react';
+import DateSelect from '../components/DateSelect';
 import timeFormat from '../lib/timeFormat';
+import Loading from '../components/Loading';
+import MovieCard from '../components/MovieCard'; // Make sure this exists
 
 const MovieDetails = () => {
+  const navigate = useNavigate();
   const { id } = useParams();
   const [show, setShow] = useState(null);
 
-  const getShow = async () => {
-    const show = dummyShowsData.find(show => show._id === id);
-    setShow({
-      movie: show,
-      dateTime: dummyDateTimeData,
-    });
-  };
-
   useEffect(() => {
+    const getShow = async () => {
+      const foundShow = dummyShowsData.find(show => show._id === id);
+      if (foundShow) {
+        setShow({
+          movie: foundShow,
+          dateTime: dummyDateTimeData,
+        });
+      }
+    };
+
     getShow();
   }, [id]);
 
-  return show ? (
+  if (!show) return <Loading />;
+
+  return (
     <div className="px-6 md:px-16 lg:px-40 pt-28 md:pt-32 text-white">
+      {/* Top section with poster and info */}
       <div className="flex flex-col md:flex-row gap-10 max-w-6xl mx-auto">
-        {/* Movie Poster */}
         <img
           src={show.movie.poster_path}
-          alt=""
+          alt={show.movie.title}
           className="max-md:mx-auto rounded-xl h-96 w-72 object-cover shadow-md"
         />
 
-        {/* Movie Info */}
         <div className="relative flex flex-col gap-3">
           <BlurCircle top="-100px" left="-100px" />
           <p className="text-primary uppercase text-sm">English</p>
@@ -49,7 +56,7 @@ const MovieDetails = () => {
             {show.movie.release_date.split('-')[0]}
           </p>
 
-          {/* Buttons */}
+          {/* Action Buttons */}
           <div className="flex gap-4 mt-4">
             <button className="flex items-center gap-2 px-4 py-2 bg-primary text-black rounded-full text-sm hover:bg-primary-dull transition">
               <PlayCircleIcon className="w-5 h-5" />
@@ -57,7 +64,7 @@ const MovieDetails = () => {
             </button>
 
             <a
-              href="#"
+              href="#dateSelect"
               className="px-4 py-2 bg-white text-black rounded-full text-sm hover:bg-gray-200 transition"
             >
               Buy Tickets
@@ -69,9 +76,47 @@ const MovieDetails = () => {
           </div>
         </div>
       </div>
+
+      {/* Cast section */}
+      <p className="text-lg font-medium mt-20">Your Favorite Cast</p>
+      <div className="overflow-x-auto no-scrollbar mt-8 pb-4">
+        <div className="flex items-center gap-4 w-max px-4">
+          {show.movie.casts.slice(0, 12).map((cast, index) => (
+            <div key={index} className="flex flex-col items-center text-center">
+              <img
+                src={cast.profile_path}
+                alt={cast.name}
+                className="rounded-full h-20 md:h-20 aspect-square object-cover"
+              />
+              <p className="font-medium text-xs mt-3">{cast.name}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Date Select */}
+      <div id="dateSelect">
+        <DateSelect dateTime={show.dateTime} id={id} />
+      </div>
+
+      {/* Recommended movies */}
+      <p className="text-lg font-medium mt-20 mb-8">You May Also Like</p>
+      <div className="flex flex-wrap justify-center gap-8">
+        {dummyShowsData.slice(0, 4).map((movie, index) => (
+          <MovieCard key={index} movie={movie} />
+        ))}
+      </div>
+
+      {/* Show more button */}
+      <div className="flex justify-center mt-20">
+        <button
+          onClick={() => {navigate('/movies');scrollTo(0,0);}}
+          className="px-10 py-3 text-sm bg-primary hover:bg-primary-dull transition rounded-md font-medium cursor-pointer"
+        >
+          Show more
+        </button>
+      </div>
     </div>
-  ) : (
-    <div className="text-center py-20 text-gray-300 text-lg">Loading...</div>
   );
 };
 
