@@ -90,21 +90,32 @@ export const addShow = async (req, res) => {
   }
 }
 
-// Api to get all shows (upcoming)from the database
-export const getShows = async(req , res) =>{
-    try {
-        const shows = await Show.find({showDateTime: {$gte: new Date()}}).populate('movie').sort({showDateTime:1});
+// ✅ Fixed: Api to get all shows (upcoming) from the database
+export const getShows = async (req, res) => {
+  try {
+    const shows = await Show.find({ showDateTime: { $gte: new Date() } })
+      .populate('movie')
+      .sort({ showDateTime: 1 });
 
-        // filter unique showa
-        const uniqueShows = new Set(shows.map(show.movie))
+    // Filter unique shows per movie
+    const uniqueShowsMap = new Map();
 
-        res.json({success:true,shows:Array.from(uniqueShows)})
-    } catch (error) {
-        console.log(error);
-        res.json({success:false,message: error.message});
-        
-    }
-}
+    shows.forEach((show) => {
+      const movieId = show.movie._id.toString();
+      if (!uniqueShowsMap.has(movieId)) {
+        uniqueShowsMap.set(movieId, show);
+      }
+    });
+
+    const uniqueShows = Array.from(uniqueShowsMap.values());
+
+    res.json({ success: true, shows: uniqueShows });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 // API to get a single show from the database
 export const getShow = async (req, res) => {
   try {
